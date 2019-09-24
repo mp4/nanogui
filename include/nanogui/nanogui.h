@@ -23,14 +23,12 @@
 #include <nanogui/toolbutton.h>
 #include <nanogui/popup.h>
 #include <nanogui/popupbutton.h>
-#include <nanogui/contextmenu.h>
 #include <nanogui/combobox.h>
 #include <nanogui/progressbar.h>
 #include <nanogui/entypo.h>
 #include <nanogui/messagedialog.h>
 #include <nanogui/textbox.h>
 #include <nanogui/slider.h>
-#include <nanogui/dial.h>
 #include <nanogui/imagepanel.h>
 #include <nanogui/imageview.h>
 #include <nanogui/vscrollpanel.h>
