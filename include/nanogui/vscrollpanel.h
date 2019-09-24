@@ -18,13 +18,15 @@
 NAMESPACE_BEGIN(nanogui)
 
 /**
- * \class VScrollPanel vscrollpanel.h nanogui/vscrollpanel.h
+ * \class ScrollPanel vscrollpanel.h nanogui/vscrollpanel.h
  *
  * \brief Adds a vertical scrollbar around a widget that is too big to fit into
  *        a certain area.
  */
 class NANOGUI_EXPORT VScrollPanel : public Widget {
 public:
+    
+    enum Position {TOP, BOTTOM, RIGHT, LEFT};
     VScrollPanel(Widget *parent);
 
     /// Return the current scroll amount as a value between 0 and 1. 0 means scrolled to the top and 1 to the bottom.
@@ -43,6 +45,7 @@ protected:
     int mChildPreferredHeight;
     float mScroll;
     bool mUpdateLayout;
+    Position mScrollPosition = RIGHT;
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
