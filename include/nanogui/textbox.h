@@ -41,6 +41,34 @@ public:
     };
 
     TextBox(Widget *parent, const std::string &value = "Untitled");
+    TextBox(Widget* parent, const std::string &value,
+      const std::function<bool(const std::string& str)> &cb,
+      const std::function<void(Widget*)> &cmcb)
+      : TextBox(parent, value)
+    {
+      setCallback(cb);
+      setComitCallback(cmcb);
+    }
+
+    TextBox(Widget* parent, const std::string &value,
+      const std::function<bool(const std::string& str)> &on_change,
+      const std::function<void(Widget*)> &on_comit,
+      const std::function<void(const std::string&,bool)> &on_edit)
+      : TextBox(parent, value)
+    {
+      setCallback(on_change);
+      setComitCallback(on_comit);
+      setEditCallback(on_edit);
+    }
+
+    TextBox(Widget* parent, const std::string &value,
+      const std::function<bool(const std::string& str)> &on_change,
+      const std::function<void(const std::string&, bool)> &on_edit)
+      : TextBox(parent, value)
+    {
+      setCallback(on_change);
+      setEditCallback(on_edit);
+    }
 
     bool editable() const { return mEditable; }
     void setEditable(bool editable);
@@ -80,7 +108,9 @@ public:
     std::function<bool(const std::string& str)> callback() const { return mCallback; }
 
     /// Sets the callback to execute when the value of this TextBox has changed.
-    void setCallback(const std::function<bool(const std::string& str)> &callback) { mCallback = callback; }
+    void setCallback(const std::function<bool(const std::string&)> &callback) { mCallback = callback; }
+    void setEditCallback(const std::function<void(const std::string&, bool)> &callback) { mEditCallback = callback; }
+    void setComitCallback(const std::function<void(Widget*)> &callback) { mComitCallback = callback; }
 
     virtual bool mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) override;
     virtual bool mouseMotionEvent(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
@@ -120,7 +150,9 @@ protected:
     std::string mUnits;
     std::string mFormat;
     int mUnitsImage;
-    std::function<bool(const std::string& str)> mCallback;
+    std::function<bool(const std::string&)> mCallback;
+    std::function<void(const std::string&, bool)> mEditCallback;
+    std::function<void(Widget*)> mComitCallback;
     bool mValidFormat;
     std::string mValueTemp;
     std::string mPlaceholder;
@@ -156,6 +188,17 @@ public:
         setSpinnable(false);
     }
 
+    IntBox(Widget *parent, Scalar value, const std::function<void(Scalar)> &cb) 
+      : IntBox(parent, value){ setCallback(cb); }
+
+    IntBox(Widget *parent, Scalar value, 
+           const std::function<void(Scalar)> &on_change,
+           const std::function<void(Scalar, bool)> &on_edit)
+      : IntBox(parent, value) {
+      setCallback(on_change);
+      setEditCallback(on_edit);
+    }
+
     Scalar value() const {
         std::istringstream iss(TextBox::value());
         Scalar value = 0;
@@ -179,6 +222,18 @@ public:
                 return true;
             }
         );
+    }
+
+    void setEditCallback(const std::function<void(Scalar,bool)> &cb) {
+      TextBox::setEditCallback(
+        [cb, this](const std::string &str, bool v) {
+          std::istringstream iss(str);
+          Scalar value = 0;
+          iss >> value;
+          setValue(value);
+          cb(value, v);
+        }
+      );
     }
 
     void setValueIncrement(Scalar incr) {

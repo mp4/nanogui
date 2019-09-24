@@ -410,6 +410,11 @@ void Screen::drawAll() {
     glfwSwapBuffers(mGLFWWindow);
 }
 
+void Screen::addChild(int index, Widget * widget)
+{
+  Widget::addChild(index, widget);
+}
+
 void Screen::drawWidgets() {
     if (!mVisible)
         return;
@@ -670,12 +675,10 @@ bool Screen::resizeCallbackEvent(int, int) {
 }
 
 void Screen::updateFocus(Widget *widget) {
-    for (auto w: mFocusPath) {
-        if (!w->focused())
-            continue;
-        w->focusEvent(false);
-    }
+    // Save old focus path
+    auto oldFocusPath = mFocusPath;
     mFocusPath.clear();
+    // Generate new focus path
     Widget *window = nullptr;
     while (widget) {
         mFocusPath.push_back(widget);
@@ -683,6 +686,13 @@ void Screen::updateFocus(Widget *widget) {
             window = widget;
         widget = widget->parent();
     }
+    // Send unfocus events to widgets losing focus.
+    for (auto w : oldFocusPath) {
+        if (!w->focused() || find(mFocusPath.begin(), mFocusPath.end(), w) != mFocusPath.end())
+            continue;
+        w->focusEvent(false);
+    }
+    // Send focus events to widgets gaining focus.
     for (auto it = mFocusPath.rbegin(); it != mFocusPath.rend(); ++it)
         (*it)->focusEvent(true);
 
@@ -707,25 +717,28 @@ void Screen::centerWindow(Window *window) {
 }
 
 void Screen::moveWindowToFront(Window *window) {
-    mChildren.erase(std::remove(mChildren.begin(), mChildren.end(), window), mChildren.end());
-    mChildren.push_back(window);
-    /* Brute force topological sort (no problem for a few windows..) */
-    bool changed = false;
-    do {
-        size_t baseIndex = 0;
-        for (size_t index = 0; index < mChildren.size(); ++index)
-            if (mChildren[index] == window)
-                baseIndex = index;
-        changed = false;
-        for (size_t index = 0; index < mChildren.size(); ++index) {
-            Popup *pw = dynamic_cast<Popup *>(mChildren[index]);
-            if (pw && pw->parentWindow() == window && index < baseIndex) {
-                moveWindowToFront(pw);
-                changed = true;
-                break;
-            }
-        }
-    } while (changed);
+  if (!isMyChild(window))
+    return;
+
+  mChildren.erase(std::remove(mChildren.begin(), mChildren.end(), window), mChildren.end());
+  mChildren.push_back(window);
+  /* Brute force topological sort (no problem for a few windows..) */
+  bool changed = false;
+  do {
+      size_t baseIndex = 0;
+      for (size_t index = 0; index < mChildren.size(); ++index)
+          if (mChildren[index] == window)
+              baseIndex = index;
+      changed = false;
+      for (size_t index = 0; index < mChildren.size(); ++index) {
+          Popup *pw = dynamic_cast<Popup *>(mChildren[index]);
+          if (pw && pw->parentWindow() == window && index < baseIndex) {
+              moveWindowToFront(pw);
+              changed = true;
+              break;
+          }
+      }
+  } while (changed);
 }
 
 NAMESPACE_END(nanogui)

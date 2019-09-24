@@ -24,6 +24,7 @@ else()
 endif()
 
 option(NANOGUI_BUILD_EXAMPLE "Build NanoGUI example application?" ON)
+option(NANOGUI_BUILD_EDITOR  "Build NanoGUI editor application?" ON)
 option(NANOGUI_BUILD_SHARED  "Build NanoGUI as a shared library?" ON)
 option(NANOGUI_BUILD_PYTHON  "Build a Python plugin for NanoGUI?" ON)
 option(NANOGUI_USE_GLAD      "Use Glad OpenGL loader library?" ${NANOGUI_USE_GLAD_DEFAULT})
@@ -325,11 +326,14 @@ add_library(nanogui-obj OBJECT
   include/nanogui/window.h src/window.cpp
   include/nanogui/popup.h src/popup.cpp
   include/nanogui/checkbox.h src/checkbox.cpp
+  include/nanogui/switchbox.h src/switchbox.cpp
+  include/nanogui/dropdownbox.h src/dropdownbox.cpp
   include/nanogui/button.h src/button.cpp
   include/nanogui/popupbutton.h src/popupbutton.cpp
   include/nanogui/combobox.h src/combobox.cpp
   include/nanogui/progressbar.h src/progressbar.cpp
   include/nanogui/slider.h src/slider.cpp
+  include/nanogui/dial.h src/dial.cpp
   include/nanogui/messagedialog.h src/messagedialog.cpp
   include/nanogui/textbox.h src/textbox.cpp
   include/nanogui/imagepanel.h src/imagepanel.cpp
@@ -341,15 +345,23 @@ add_library(nanogui-obj OBJECT
   include/nanogui/stackedwidget.h src/stackedwidget.cpp
   include/nanogui/tabheader.h src/tabheader.cpp
   include/nanogui/tabwidget.h src/tabwidget.cpp
+  include/nanogui/contextmenu.h src/contextmenu.cpp
   include/nanogui/glcanvas.h src/glcanvas.cpp
+  include/nanogui/editworkspace.h src/editworkspace.cpp
+  include/nanogui/editproperties.h src/editproperties.cpp
+  include/nanogui/widgetsfactory.h src/widgetsfactory.cpp
+  include/nanogui/scrollbar.h src/scrollbar.cpp
+  include/nanogui/widgetsfactory.h src/widgetsfactory.cpp
+  include/nanogui/windowmenu.h src/windowmenu.cpp
+  include/nanogui/table.h src/table.cpp
   include/nanogui/formhelper.h
   include/nanogui/toolbutton.h
   include/nanogui/opengl.h
   include/nanogui/nanogui.h
-  include/nanogui/serializer/core.h
+  include/nanogui/serializer/core.h    src/serializer.cpp
   include/nanogui/serializer/opengl.h
   include/nanogui/serializer/sparse.h
-  src/serializer.cpp
+  include/nanogui/serializer/json.h
 )
 
 # XCode has a serious bug where the XCode project produces an invalid target
@@ -421,6 +433,13 @@ elseif(MSVC)
 endif()
 
 # Build example application if desired
+if(NANOGUI_BUILD_EDITOR)
+  add_executable(editor      src/editor.cpp)
+  target_link_libraries(editor      nanogui ${NANOGUI_EXTRA_LIBS})
+
+  file(COPY resources/icons DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
 if(NANOGUI_BUILD_EXAMPLE)
   add_executable(example1      src/example1.cpp)
   add_executable(example2      src/example2.cpp)

@@ -19,7 +19,7 @@
 NAMESPACE_BEGIN(nanogui)
 
 enum class Cursor;// do not put a docstring, this is already documented
-
+namespace Json { class value; }
 /**
  * \class Widget widget.h nanogui/widget.h
  *
@@ -57,8 +57,19 @@ public:
 
     /// Return the position relative to the parent widget
     const Vector2i &position() const { return mPos; }
+    const int right() const { return mPos.x() + mSize.x(); }
+    const int left() const { return mPos.x(); }
     /// Set the position relative to the parent widget
     void setPosition(const Vector2i &pos) { mPos = pos; }
+    void setPosition(int x, int y) { mPos = Vector2i(x, y); }
+
+    void setGeometry(const Vector4i &vec) {
+      setPosition(vec.x(), vec.y());
+      setSize(vec.z() - vec.x(), vec.w() - vec.y());
+    }
+
+    bool sendChildToBack(Widget* child);
+    bool sendToBack();
 
     /// Return the absolute position on screen
     Vector2i absolutePosition() const {
@@ -66,10 +77,36 @@ public:
             (parent()->absolutePosition() + mPos) : mPos;
     }
 
+    Vector4i absoluteRect() const {
+      Vector2i ap = absolutePosition();
+      return Vector4i(ap.x(), ap.y(), ap.x() + width(), ap.y() + height());
+    }
+
+    Vector4i rect() const {
+      Vector2i p = position();
+      return Vector4i(p.x(), p.y(), p.x() + width(), p.y() + height());
+    }
+
+    Widget *findWidget(const std::string& id, bool inchildren = true);
+    Widget *findWidget(std::function<bool(Widget*)> cond, bool inchildren = true);
+
+    Widget *findWidgetGlobal(const std::string& id);
+    Widget *findWidgetGlobal(std::function<bool(Widget*)> cond);
+
+    virtual std::string wtypename() const;
+
+    template<typename RetClass>
+    RetClass *findWidgetGlobal(const std::string& id)
+    {
+      Widget* f = findWidgetGlobal(id);
+      return f ? f->cast<RetClass>() : nullptr;
+    }
+
     /// Return the size of the widget
     const Vector2i &size() const { return mSize; }
     /// set the size of the widget
     void setSize(const Vector2i &size) { mSize = size; }
+    inline void setSize(int w, int h) { mSize = Vector2i(w, h); }
 
     /// Return the width of the widget
     int width() const { return mSize.x(); }
@@ -91,6 +128,9 @@ public:
      * in the parent widget.
      */
     void setFixedSize(const Vector2i &fixedSize) { mFixedSize = fixedSize; }
+
+    void setMinSize(const Vector2i &minSize) { mMinSize = minSize; }
+    void setMinWidth(int ww) { mMinSize.x() = ww; }
 
     /// Return the fixed size (see \ref setFixedSize())
     const Vector2i &fixedSize() const { return mFixedSize; }
@@ -123,6 +163,9 @@ public:
     /// Return the number of child widgets
     int childCount() const { return (int) mChildren.size(); }
 
+    bool bringToFront();
+    bool bringChildToFront(Widget* element);
+
     /// Return the list of child widgets of the current widget
     const std::vector<Widget *> &children() const { return mChildren; }
 
@@ -138,6 +181,8 @@ public:
 
     /// Convenience function which appends a widget at the end
     void addChild(Widget *widget);
+
+    void remove();
 
     /// Remove a child widget by index
     void removeChild(int index);
@@ -216,6 +261,28 @@ public:
         return (d >= 0).all() && (d < mSize.array()).all();
     }
 
+    bool isMyChildRecursive(Widget* w)
+    {
+      if (!w)
+        return false;
+      do
+      {
+        if (w->parent())
+          w = w->parent();
+
+      } while (w->parent() && w != this);
+
+      return w == this;
+    }
+
+    bool isMyChild(Widget* w) const
+    {
+      for (auto& c : mChildren)
+        if (c == w) return true;
+
+      return false;
+    }
+
     /// Determine the widget located at the given position value (recursive)
     Widget *findWidget(const Vector2i &p);
 
@@ -245,6 +312,7 @@ public:
 
     /// Compute the preferred size of the widget
     virtual Vector2i preferredSize(NVGcontext *ctx) const;
+    Vector2i preferredSize();
 
     /// Invoke the associated layout generator to properly place child widgets, if any
     virtual void performLayout(NVGcontext *ctx);
@@ -254,9 +322,16 @@ public:
 
     /// Save the state of the widget into the given \ref Serializer instance
     virtual void save(Serializer &s) const;
+    virtual void save(Json::value &s) const;
 
     /// Restore the state of the widget from the given \ref Serializer instance
     virtual bool load(Serializer &s);
+    virtual bool load(Json::value &s);
+
+    inline void setSubElement(bool v) { mSubElement = v; }
+    inline bool isSubElement() const { return mSubElement; }
+
+    void setDebugDraw(bool en) { mDebugDraw = en; }
 
 protected:
     /// Free all resources used by the widget and any children
@@ -279,7 +354,7 @@ protected:
     ref<Theme> mTheme;
     ref<Layout> mLayout;
     std::string mId;
-    Vector2i mPos, mSize, mFixedSize;
+    Vector2i mPos, mSize, mFixedSize, mMinSize;;
     std::vector<Widget *> mChildren;
 
     /**
@@ -287,6 +362,9 @@ protected:
      * currently visible, no time is wasted executing its drawing method.
      */
     bool mVisible;
+
+    bool mSubElement = false;
+    bool mDebugDraw = false;
 
     /**
      * Whether or not this Widget is currently enabled.  Various different kinds
