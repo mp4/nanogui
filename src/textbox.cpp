@@ -78,10 +78,6 @@ Vector2i TextBox::preferredSize(NVGcontext *ctx) const {
 
     float ts = nvgTextBounds(ctx, 0, 0, mValue.c_str(), nullptr, nullptr);
     size(0) = size(1) + ts + uw + sw;
-    if (mFixedSize.x() > 0)
-      size.x() = mFixedSize.x();
-    if (mFixedSize.y() > 0)
-      size.y() = mFixedSize.y();
     return size;
 }
 
@@ -450,28 +446,16 @@ bool TextBox::keyboardEvent(int key, int /* scancode */, int action, int modifie
                     if (mCursorPos > 0) {
                         mValueTemp.erase(mValueTemp.begin() + mCursorPos - 1);
                         mCursorPos--;
-
-                        if (mEditCallback)
-                          mEditCallback(mValueTemp, true);
                     }
                 }
             } else if (key == GLFW_KEY_DELETE) {
                 if (!deleteSelection()) {
-                  if (mCursorPos < (int)mValueTemp.length())
-                  {
-                    mValueTemp.erase(mValueTemp.begin() + mCursorPos);
-                    if (mEditCallback)
-                      mEditCallback(mValueTemp, true);
-                  }
+                    if (mCursorPos < (int) mValueTemp.length())
+                        mValueTemp.erase(mValueTemp.begin() + mCursorPos);
                 }
             } else if (key == GLFW_KEY_ENTER) {
                 if (!mCommitted)
                     focusEvent(false);
-                if (mComitCallback)
-                {
-                  mComitCallback(this);
-                  return true;
-                }
             } else if (key == GLFW_KEY_A && modifiers == SYSTEM_COMMAND_MOD) {
                 mCursorPos = (int) mValueTemp.length();
                 mSelectionPos = 0;
@@ -505,9 +489,6 @@ bool TextBox::keyboardCharacterEvent(unsigned int codepoint) {
         mCursorPos++;
 
         mValidFormat = (mValueTemp == "") || checkFormat(mValueTemp, mFormat);
-
-        if (mEditCallback)
-          mEditCallback(mValueTemp, mValidFormat);
 
         return true;
     }
@@ -557,11 +538,7 @@ void TextBox::pasteFromClipboard() {
         return;
     const char* cbstr = glfwGetClipboardString(sc->glfwWindow());
     if (cbstr)
-    {
-      mValueTemp.insert(mCursorPos, std::string(cbstr));
-      if (mEditCallback)
-        mEditCallback(mValueTemp, true);
-    }
+        mValueTemp.insert(mCursorPos, std::string(cbstr));
 }
 
 bool TextBox::deleteSelection() {
@@ -577,9 +554,6 @@ bool TextBox::deleteSelection() {
         else
             mValueTemp.erase(mValueTemp.begin() + begin,
                              mValueTemp.begin() + end);
-
-        if (mEditCallback)
-          mEditCallback(mValueTemp, true);
 
         mCursorPos = begin;
         mSelectionPos = -1;

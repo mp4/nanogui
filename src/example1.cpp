@@ -18,7 +18,6 @@
 #include <nanogui/layout.h>
 #include <nanogui/label.h>
 #include <nanogui/checkbox.h>
-#include <nanogui/dial.h>
 #include <nanogui/button.h>
 #include <nanogui/toolbutton.h>
 #include <nanogui/popupbutton.h>
@@ -33,16 +32,9 @@
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/colorwheel.h>
 #include <nanogui/colorpicker.h>
-#include <nanogui/table.h>
 #include <nanogui/graph.h>
 #include <nanogui/tabwidget.h>
-#include <nanogui/switchbox.h>
-#include <nanogui/dropdownbox.h>
-#include <nanogui/editworkspace.h>
-#include <nanogui/editproperties.h>
-#include <nanogui/scrollbar.h>
 #include <iostream>
-#include <sstream>
 #include <string>
 
 // Includes for the GLTexture class.
@@ -61,7 +53,6 @@
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#include <nanogui/contextmenu.h>
 
 #if defined(_WIN32)
 #  pragma warning(pop)
@@ -212,14 +203,6 @@ public:
         popupLeft->setLayout(new GroupLayout());
         new CheckBox(popupLeft, "Another check box");
 
-        new Label(window, "A switch boxes", "sans-bold");
-        Widget *swbx = new Widget(window);
-        swbx->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Middle, 0, 2));
-
-        auto* swbh = new SwitchBox(swbx, SwitchBox::Alignment::Horizontal, "");
-        swbh->setFixedSize(Vector2i(80, 30));
-        new SwitchBox(swbx, SwitchBox::Alignment::Vertical, "");
-
         window = new Window(this, "Basic widgets");
         window->setPosition(Vector2i(200, 15));
         window->setLayout(new GroupLayout());
@@ -316,8 +299,7 @@ public:
         });
 
         new Label(window, "Combo box", "sans-bold");
-        new DropdownBox(window, { "Dropdown item 1", "Dropdown item 2", "Dropdown item 3"});
-        new ComboBox(window, { "Combo box item 1", "Combo box item 2", "Combo box item 3" });
+        new ComboBox(window, { "Combo box item 1", "Combo box item 2", "Combo box item 3"});
         new Label(window, "Check box", "sans-bold");
         CheckBox *cb = new CheckBox(window, "Flag 1",
             [](bool state) { cout << "Check box 1 state: " << state << endl; }
@@ -352,36 +334,6 @@ public:
         textBox->setFixedSize(Vector2i(60,25));
         textBox->setFontSize(20);
         textBox->setAlignment(TextBox::Alignment::Right);
-
-        {
-          new Label(window, "Dial and text box", "sans-bold");
-
-          panel = new Widget(window);
-          panel->setLayout(new BoxLayout(Orientation::Horizontal,
-            Alignment::Middle, 0, 20));
-
-          Dial *dial = new Dial(panel);
-          dial->setValue(0.01f);
-          dial->setFixedWidth(80);
-
-          auto dialTextBox = new TextBox(panel);
-          dialTextBox->setFixedSize(Vector2i(60, 25));
-          dialTextBox->setValue("0.01");
-          dial->setCallback([dialTextBox](float value) {
-            value = 0.01f + 99.99f*powf(value, 5.0f);
-            std::ostringstream sval;
-            sval.precision(2); sval << std::fixed << value;
-            dialTextBox->setValue(sval.str());
-          });
-          dial->setFinalCallback([&, d = dial](float value) {
-            d->setHighlightedRange(std::pair<float, float>(0.0f, value));
-            value = 0.01f + 99.99f*powf(value, 5.0f);
-            cout << "Final dial value: " << value << endl;
-          });
-          dialTextBox->setFixedSize(Vector2i(60, 25));
-          dialTextBox->setFontSize(20);
-          dialTextBox->setAlignment(TextBox::Alignment::Right);
-        }
 
         window = new Window(this, "Misc. widgets");
         window->setPosition(Vector2i(425,15));
@@ -563,8 +515,8 @@ public:
 
         });
 
-
         performLayout();
+
         /* All NanoGUI widgets are initialized at this point. Now
            create an OpenGL shader to draw the main window contents.
 
@@ -626,8 +578,7 @@ public:
 
     virtual void draw(NVGcontext *ctx) {
         /* Animate the scrollbar */
-        if (mProgress)
-          mProgress->setValue(std::fmod((float) glfwGetTime() / 10, 1.0f));
+        mProgress->setValue(std::fmod((float) glfwGetTime() / 10, 1.0f));
 
         /* Draw the user interface */
         Screen::draw(ctx);
@@ -650,30 +601,8 @@ public:
         /* Draw 2 triangles starting at index 0 */
         mShader.drawIndexed(GL_TRIANGLES, 0, 2);
     }
-
-    bool mouseButtonEvent(const Eigen::Vector2i &p, int button, bool down, int modifiers) override {
-        if (Widget::mouseButtonEvent(p, button, down, modifiers))
-            return true;
-        if(down && button==GLFW_MOUSE_BUTTON_RIGHT && findWidget(p)==this) {
-            auto menu = new nanogui::ContextMenu(this, true);
-            menu->addItem("Item 1", [this]() { new nanogui::MessageDialog(this, nanogui::MessageDialog::Type::Information, "Item 1", "Item 1 Clicked!"); }, ENTYPO_ICON_PLUS);
-
-            auto submenu = menu->addSubMenu("Submenu");
-            submenu->addItem("Subitem 1", [this]() { new nanogui::MessageDialog(this, nanogui::MessageDialog::Type::Information, "Subitem 1", "Subitem 1 Clicked!"); });
-            auto subsubmenu = submenu->addSubMenu("Subsubmenu", ENTYPO_ICON_LOOP);
-            submenu->addItem("Subitem 2", [this]() { new nanogui::MessageDialog(this, nanogui::MessageDialog::Type::Information, "Subitem 2", "Subitem 2 Clicked!"); });
-
-            subsubmenu->addItem("Subsubitem 1", [this]() { new nanogui::MessageDialog(this, nanogui::MessageDialog::Type::Information, "Subsubitem 1", "Subsubitem 1 Clicked!"); });
-            subsubmenu->addItem("Subsubitem 2", [this]() { new nanogui::MessageDialog(this, nanogui::MessageDialog::Type::Information, "Subsubitem 2", "Subsubitem 2 Clicked!"); });
-
-            menu->activate(p-mPos);
-            performLayout();
-        }
-        return true;
-    }
-
 private:
-    nanogui::ProgressBar *mProgress = nullptr;
+    nanogui::ProgressBar *mProgress;
     nanogui::GLShader mShader;
 
     using imagesDataType = vector<pair<GLTexture, GLTexture::handleType>>;

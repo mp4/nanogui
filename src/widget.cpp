@@ -16,7 +16,6 @@
 #include <nanogui/opengl.h>
 #include <nanogui/screen.h>
 #include <nanogui/serializer/core.h>
-#include <nanogui/serializer/json.h>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -47,12 +46,6 @@ void Widget::setTheme(Theme *theme) {
 
 int Widget::fontSize() const {
     return (mFontSize < 0 && mTheme) ? mTheme->mStandardFontSize : mFontSize;
-}
-
-Vector2i Widget::preferredSize()
-{
-  Screen* scr = screen();
-  return scr ? preferredSize(scr->nvgContext()) : Vector2i::Zero();
 }
 
 Vector2i Widget::preferredSize(NVGcontext *ctx) const {
@@ -146,104 +139,13 @@ bool Widget::keyboardCharacterEvent(unsigned int) {
     return false;
 }
 
-Widget* Widget::findWidget(std::function<bool(Widget*)> cond, bool inchildren)
-{
-  if (cond(this))
-    return this;
-
-  if (inchildren)
-  {
-    for (auto* child : mChildren)
-    {
-      Widget* w = child->findWidget(cond, inchildren);
-      if (w)
-        return w;
-    }
-  }
-
-  return nullptr;
-}
-
-Widget* Widget::findWidget(const std::string& id, bool inchildren)
-{
-  return findWidget([id](Widget* w) -> bool { return w->id() == id; }, inchildren);
-}
-
-Widget *Widget::findWidgetGlobal(const std::string& id)
-{
-  return screen()->findWidget(id, true);
-}
-
-Widget *Widget::findWidgetGlobal(std::function<bool(Widget*)> cond)
-{
-  return screen()->findWidget(cond);
-}
-
 void Widget::addChild(int index, Widget * widget) {
     assert(index <= childCount());
-    Widget* prevparent = widget->parent();
-
     mChildren.insert(mChildren.begin() + index, widget);
     widget->incRef();
     widget->setParent(this);
     widget->setTheme(mTheme);
-
-    if (prevparent && prevparent != this)
-      prevparent->removeChild(widget);
 }
-
-std::string Widget::wtypename() const { return "widget"; }
-
-bool Widget::bringToFront()
-{
-  if (parent())
-    return parent()->bringChildToFront(this);
-
-  return false;
-}
-
-bool Widget::sendChildToBack(Widget* child)
-{
-  auto it = mChildren.begin();
-  if (child == (*it))	// already there
-    return true;
-  for (; it != mChildren.end(); ++it)
-  {
-    if (child == (*it))
-    {
-      mChildren.erase(it);
-      mChildren.insert(mChildren.begin(), child);
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool Widget::sendToBack()
-{
-  if (parent())
-    return parent()->sendChildToBack(this);
-
-  return false;
-}
-
-bool Widget::bringChildToFront(Widget* element)
-{
-  auto it = mChildren.begin();
-  for (; it != mChildren.end(); ++it)
-  {
-    if (element == (*it))
-    {
-      mChildren.erase(it);
-      mChildren.push_back(element);
-      return true;
-    }
-  }
-
-  return false;
-}
-
 
 void Widget::addChild(Widget * widget) {
     addChild(childCount(), widget);
@@ -252,12 +154,6 @@ void Widget::addChild(Widget * widget) {
 void Widget::removeChild(const Widget *widget) {
     mChildren.erase(std::remove(mChildren.begin(), mChildren.end(), widget), mChildren.end());
     widget->decRef();
-}
-
-void Widget::remove()
-{
-  if (parent())
-    parent()->removeChild(this);
 }
 
 void Widget::removeChild(int index) {
@@ -332,7 +228,7 @@ void Widget::draw(NVGcontext *ctx) {
 }
 
 void Widget::save(Serializer &s) const {
-  s.set("position", mPos); //s.set("$position_type", std::string("vec2")); s.set("$position_name", std::string("Position"));
+    s.set("position", mPos);
     s.set("size", mSize);
     s.set("fixedSize", mFixedSize);
     s.set("visible", mVisible);
@@ -341,34 +237,6 @@ void Widget::save(Serializer &s) const {
     s.set("tooltip", mTooltip);
     s.set("fontSize", mFontSize);
     s.set("cursor", (int) mCursor);
-}
-
-void Widget::save(Json::value &save) const {
-  Json::object obj;
-  obj["position"] = Json::hobject().$("x", mPos.x()).$("y", mPos.y()).$("type", "position").$("name", "Position");
-  obj["size"] = Json::hobject().$("w", mSize.x()).$("h", (int)mSize.y()).$("type", "size").$("name", "Size");
-  obj["fixedSize"] = Json::hobject().$("w", mFixedSize.x()).$("h", mFixedSize.y()).$("type", "size").$("name", "Fixed size");
-  obj["visible"] = Json::hobject().$("value", mVisible).$("type", "boolean").$("name", "Visible");
-  obj["enabled"] = Json::hobject().$("value", mEnabled).$("type", "boolean").$("name", "Enabled");
-  obj["focused"] = Json::hobject().$("value", mFocused).$("type", "boolean").$("name", "Focused");
-  obj["tooltip"] = Json::hobject().$("value", mTooltip).$("type", "string").$("name", "Tooltip");
-  obj["fontSize"] = Json::hobject().$("value", mFontSize).$("type", "integer").$("name", "Font size");
-  obj["cursor"] = Json::hobject().$("value", (int)mCursor).$("type", "integer").$("name", "Cursor");
-
-  save = Json::value(obj);
-}
-
-bool Widget::load(Json::value &save) { 
-  auto p = save.get("position"); mPos = { p.get_int("x"), p.get_int("y") };
-  auto s = save.get("size"); mSize = { s.get_int("w"), s.get_int("h") };
-  auto fs = save.get("fixedSize"); mFixedSize = { fs.get_int("w"), fs.get_int("h") };
-  auto v = save.get("visible"); mVisible = v.get_bool("value");
-  auto e = save.get("enabled"); mEnabled = e.get_bool("value");
-  auto fc = save.get("focused"); mFocused = fc.get_bool("value");
-  auto t = save.get("tooltip"); mTooltip = t.get_str("value");
-  auto fh = save.get("fontSize"); mFontSize = fh.get_int("value");
-  auto cr = save.get("cursor"); mCursor = (Cursor)cr.get_int("value");
-  return true; 
 }
 
 bool Widget::load(Serializer &s) {
