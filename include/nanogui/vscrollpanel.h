@@ -25,7 +25,7 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT VScrollPanel : public Widget {
 public:
-    
+
     enum Position {TOP, BOTTOM, RIGHT, LEFT};
     VScrollPanel(Widget *parent);
 
