@@ -211,7 +211,7 @@ public:
     void setCursor(Cursor cursor) { mCursor = cursor; }
 
     /// Check if the widget contains a certain position
-    bool contains(const Vector2i &p) const {
+    virtual bool contains(const Vector2i &p) const {
         auto d = (p-mPos).array();
         return (d >= 0).all() && (d < mSize.array()).all();
     }
