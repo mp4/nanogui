@@ -33,7 +33,9 @@ public:
     float scroll() const { return mScroll; }
     /// Set the scroll amount to a value between 0 and 1. 0 means scrolled to the top and 1 to the bottom.
     void setScroll(float scroll) { mScroll = scroll; }
-
+    
+    void setScrollPosition(Position pos){mScrollPosition = pos;}
+    
     virtual void performLayout(NVGcontext *ctx) override;
     virtual Vector2i preferredSize(NVGcontext *ctx) const override;
     virtual bool mouseDragEvent(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
@@ -45,6 +47,7 @@ protected:
     int mChildPreferredHeight;
     float mScroll;
     bool mUpdateLayout;
+    int mScrollBoxSize = 12;
     Position mScrollPosition = RIGHT;
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
