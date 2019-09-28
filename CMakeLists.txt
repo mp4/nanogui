@@ -415,6 +415,7 @@ endif()
 
 # Quench warnings while compiling NanoVG
 if (CMAKE_COMPILER_IS_GNUCC)
+    target_compile_options(nanogui PRIVATE -Wall -Wextra)
   set_source_files_properties(ext/nanovg/src/nanovg.c PROPERTIES COMPILE_FLAGS -Wno-unused-result)
 elseif(MSVC)
   set_source_files_properties(ext/nanovg/src/nanovg.c PROPERTIES COMPILE_FLAGS "/wd4005 /wd4456 /wd4457")
