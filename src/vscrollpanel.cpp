@@ -45,16 +45,11 @@ void VScrollPanel::performLayout(NVGcontext *ctx) {
 Vector2i VScrollPanel::preferredSize(NVGcontext *ctx) const {
     if (mChildren.empty())
         return Vector2i::Zero();
-    
-    Vector2i offset = Vector2i(
-        mScrollBoxSize * (mScrollPosition == LEFT || mScrollPosition == RIGHT),
-        mScrollBoxSize * (mScrollPosition == TOP || mScrollPosition == BOTTOM));
-    return mChildren[0]->preferredSize(ctx) + offset;
+    return mChildren[0]->preferredSize(ctx) + Vector2i(12, 0);
 }
 
 bool VScrollPanel::mouseDragEvent(const Vector2i &p, const Vector2i &rel,
                             int button, int modifiers) {
-    //should work for left and right
     if (!mChildren.empty() && mChildPreferredHeight > mSize.y()) {
         float scrollh = height() *
             std::min(1.0f, height() / (float)mChildPreferredHeight);
@@ -69,7 +64,6 @@ bool VScrollPanel::mouseDragEvent(const Vector2i &p, const Vector2i &rel,
 }
 
 bool VScrollPanel::scrollEvent(const Vector2i &p, const Vector2f &rel) {
-    //works for left and right
     if (!mChildren.empty() && mChildPreferredHeight > mSize.y()) {
         float scrollAmount = rel.y() * (mSize.y() / 20.0f);
         float scrollh = height() *
@@ -132,14 +126,12 @@ void VScrollPanel::save(Serializer &s) const {
     Widget::save(s);
     s.set("childPreferredHeight", mChildPreferredHeight);
     s.set("scroll", mScroll);
-    s.set("scrollPosition", mScrollPosition);
 }
 
 bool VScrollPanel::load(Serializer &s) {
     if (!Widget::load(s)) return false;
     if (!s.get("childPreferredHeight", mChildPreferredHeight)) return false;
     if (!s.get("scroll", mScroll)) return false;
-    if (!s.get("scrollPosition", mScrollPosition)) return false;
     return true;
 }
 
