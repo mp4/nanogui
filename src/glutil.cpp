@@ -283,12 +283,12 @@ void GLShader::drawIndexed(int type, uint32_t offset_, uint32_t count_) {
 void GLShader::multiDrawIndexed(int type, std::vector<uint64_t> & offset, std::vector<uint32_t> & count) {
     int primitive_count = std::min(count.size(), offset.size());
 
-    
-    //assert(count.size() == offset.size());//primitive count differs
+
+    assert(count.size() == offset.size());//primitive count differs
 
     //offsets may need to be multiplied by sizeof(uint32_t)* 3?2
     //counts may need to be multiplied by 3?2
-    
+
     glMultiDrawElements(type, (GLsizei *) &count[0], GL_UNSIGNED_INT,
                         (const GLvoid**)offset.data(), primitive_count);
 }

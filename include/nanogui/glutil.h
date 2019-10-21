@@ -223,7 +223,7 @@ public:
     /// Draw a sequence of primitives using a previously uploaded index buffer
     /// the number of primitives is automatically calculated based on the vectors
     void multiDrawIndexed(int type, std::vector<uint64_t> & offset, std::vector<uint32_t> & count);
-    
+
     /// Initialize a uniform parameter with a 4x4 matrix (float)
     template <typename T>
     void setUniform(const std::string &name, const Eigen::Matrix<T, 4, 4> &mat, bool warn = true) {
