@@ -599,7 +599,12 @@ public:
         mShader.setUniform("modelViewProj", mvp);
 
         /* Draw 2 triangles starting at index 0 */
-        mShader.drawIndexed(GL_TRIANGLES, 0, 2);
+        //mShader.drawIndexed(GL_TRIANGLES, 0, 2);
+        
+        //Alternative rendering method using multiDrawIndexed
+        std::vector<uint32_t> counts = {3,3};
+        std::vector<uint64_t> offsets = {0,3*sizeof(uint32_t)};
+        mShader.multiDrawIndexed(GL_TRIANGLES, offsets, counts);
     }
 private:
     nanogui::ProgressBar *mProgress;
